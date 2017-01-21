@@ -34,7 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EMPTY_TIMESTAMP             0x80
 
 BLEService midiService("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
-BLECharacteristic midiChar("7772E5DB-3868-4112-A1A9-F2669D106BF3", BLEWrite | BLEWriteWithoutResponse | BLENotify, SINGLE_BLE_PACKET_LENGTH);
+BLECharacteristic midiChar("7772E5DB-3868-4112-A1A9-F2669D106BF3", BLEWrite | BLEWriteWithoutResponse | BLENotify | BLERead, SINGLE_BLE_PACKET_LENGTH);
+bool isConnected;
 
 uint8_t midiData[SINGLE_BLE_PACKET_LENGTH];
 uint8_t midiEvent[MIDI_EVENT_MAX_LENGTH];
@@ -45,12 +46,14 @@ byte prevStatus;
 int midiEventCount;
 
 void midiDeviceConnectHandler(BLEDevice central) {
+    isConnected = true;
     // central connected event handler
     Serial.print("Connected event, central: ");
     Serial.println(central.address());
 }
 
 void midiDeviceDisconnectHandler(BLEDevice central) {
+    isConnected = false;
     // central disconnected event handler
     Serial.print("Disconnected event, central: ");
     Serial.println(central.address());
@@ -173,6 +176,7 @@ void setup() {
     prevStatus = 0x00;
     midiEventCount = 0;
     time = 0;
+    isConnected = false;
     Serial.begin(115200);
     while (!Serial);
     Serial1.begin(31250);    
@@ -182,6 +186,10 @@ void setup() {
 }
 
 void loop() {
+    if (!isConnected) {
+        BLE.poll();
+    }
+    
     if (Serial1.available()) {
         byte b = Serial1.read();
         processByte(b);
