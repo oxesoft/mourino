@@ -47,16 +47,10 @@ int midiEventCount;
 
 void midiDeviceConnectHandler(BLEDevice central) {
     isConnected = true;
-    // central connected event handler
-    Serial.print("Connected event, central: ");
-    Serial.println(central.address());
 }
 
 void midiDeviceDisconnectHandler(BLEDevice central) {
     isConnected = false;
-    // central disconnected event handler
-    Serial.print("Disconnected event, central: ");
-    Serial.println(central.address());
 }
 
 void BLESetup()
@@ -177,12 +171,8 @@ void setup() {
     midiEventCount = 0;
     time = 0;
     isConnected = false;
-    Serial.begin(115200);
-    while (!Serial);
     Serial1.begin(31250);    
-    while (!Serial1);
     BLESetup();
-    Serial.println("Bluetooth device active, waiting for connections...");
 }
 
 void loop() {
