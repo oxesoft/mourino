@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 BLEService midiService("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
 BLECharacteristic midiChar("7772E5DB-3868-4112-A1A9-F2669D106BF3", BLEWrite | BLEWriteWithoutResponse | BLENotify | BLERead, SINGLE_BLE_PACKET_LENGTH);
-bool isConnected;
 
 uint8_t midiData[SINGLE_BLE_PACKET_LENGTH];
 uint8_t midiEvent[MIDI_EVENT_MAX_LENGTH];
@@ -44,40 +43,6 @@ int midiEventPosition;
 unsigned long time;
 byte prevStatus;
 int midiEventCount;
-
-void midiDeviceConnectHandler(BLEDevice central) {
-    isConnected = true;
-}
-
-void midiDeviceDisconnectHandler(BLEDevice central) {
-    isConnected = false;
-}
-
-void BLESetup()
-{
-    BLE.begin();
-    
-    // set the local name peripheral advertises
-    BLE.setLocalName("Mourino");
-    BLE.setDeviceName("Mourino");
-    
-    // set the UUID for the service this peripheral advertises
-    BLE.setAdvertisedServiceUuid(midiService.uuid());
-    
-    // add service and characteristic
-    midiService.addCharacteristic(midiChar);
-    BLE.addService(midiService);
-    
-    // assign event handlers for connected, disconnected to peripheral
-    BLE.setEventHandler(BLEConnected, midiDeviceConnectHandler);
-    BLE.setEventHandler(BLEDisconnected, midiDeviceDisconnectHandler);
-    
-    // set an initial value for the characteristic
-    midiChar.setValue(midiData, 5);
-    
-    // advertise the service
-    BLE.advertise();
-}
 
 void sendPacket() {
     midiChar.setValue(midiData, midiDataPosition);
@@ -170,16 +135,19 @@ void setup() {
     prevStatus = 0x00;
     midiEventCount = 0;
     time = 0;
-    isConnected = false;
+    
     Serial1.begin(31250);    
-    BLESetup();
+
+    BLE.begin();    
+    BLE.setLocalName("Mourino");
+    BLE.setDeviceName("Mourino");
+    BLE.setAdvertisedServiceUuid(midiService.uuid());
+    midiService.addCharacteristic(midiChar);
+    BLE.addService(midiService);
+    BLE.advertise();
 }
 
 void loop() {
-    if (!isConnected) {
-        BLE.poll();
-    }
-    
     if (Serial1.available()) {
         byte b = Serial1.read();
         processByte(b);
@@ -190,6 +158,7 @@ void loop() {
             sendPacket();
         }
         time = micros();
+        BLE.poll();
     }
 }
 
