@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <CurieBLE.h>
 
+#define DEVICE_NAME                 "Mourino"
 #define MINIMUM_CONNECTION_INTERVAL 11250 // 11.25 ms
 #define SINGLE_BLE_PACKET_LENGTH    BLE_MAX_ATTR_DATA_LEN
 #define MIDI_EVENT_MAX_LENGTH       SINGLE_BLE_PACKET_LENGTH - 1 /* minus the header size */
@@ -51,7 +52,7 @@ void sendPacket() {
 }
 
 void appendEvent(byte *event, int len) {
-    if (midiDataPosition + len >= SINGLE_BLE_PACKET_LENGTH) {
+    if (midiDataPosition + len > SINGLE_BLE_PACKET_LENGTH) {
         sendPacket();
     }
     memcpy(midiData + midiDataPosition, event, len);
@@ -109,7 +110,7 @@ void processByte(byte b) {
                 }
                 break;
         }
-        if (prevStatus != b || midiDataPosition + midiEventCount >= SINGLE_BLE_PACKET_LENGTH) {
+        if (prevStatus != b || midiDataPosition + midiEventCount > SINGLE_BLE_PACKET_LENGTH) {
             addEventByte(EMPTY_TIMESTAMP);
             addEventByte(b);
         }
@@ -139,8 +140,8 @@ void setup() {
     Serial1.begin(31250);    
 
     BLE.begin();    
-    BLE.setLocalName("Mourino");
-    BLE.setDeviceName("Mourino");
+    BLE.setLocalName(DEVICE_NAME);
+    BLE.setDeviceName(DEVICE_NAME);
     BLE.setAdvertisedServiceUuid(midiService.uuid());
     midiService.addCharacteristic(midiChar);
     BLE.addService(midiService);
@@ -161,4 +162,3 @@ void loop() {
         BLE.poll();
     }
 }
-
