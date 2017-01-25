@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if EXECUTE_FROM_COMMAND_LINE
+
 #define byte unsigned char
 #define BLE_MAX_ATTR_DATA_LEN   20
 #define MINIMUM_CONN_INTERVAL   11250
@@ -354,3 +356,5 @@ int main() {
         }
     }
 }
+
+#endif

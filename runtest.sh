@@ -1,7 +1,7 @@
 #!/bin/sh
 touch CurieBLE.h
 rm -rf mourino mourino.dSYM
-gcc -o mourino -I. -x c++ mourino.tst -O0 -g
+gcc -o mourino -I. -DEXECUTE_FROM_COMMAND_LINE mourino.cpp -O0 -g
 ./mourino
 if [ $? -eq 0 ]; then
     echo "PASSED"
