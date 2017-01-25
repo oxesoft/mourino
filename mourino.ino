@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MINIMUM_CONNECTION_INTERVAL 11250 // 11.25 ms
 #define SINGLE_BLE_PACKET_LENGTH    BLE_MAX_ATTR_DATA_LEN
 #define MIDI_EVENT_MAX_LENGTH       SINGLE_BLE_PACKET_LENGTH - 1 /* minus the header size */
-#define EMPTY_TIMESTAMP             0x80
 
 BLEService midiService("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
 BLECharacteristic midiChar("7772E5DB-3868-4112-A1A9-F2669D106BF3", BLEWrite | BLEWriteWithoutResponse | BLENotify | BLERead, SINGLE_BLE_PACKET_LENGTH);
@@ -68,6 +67,9 @@ void addEventByte(byte b) {
 }
 
 int getEventSize(byte b) {
+    /*
+     * https://www.midi.org/specifications/item/table-1-summary-of-midi-message
+     */
     byte eventType = b & 0xF0;
     switch (eventType) {
     case 0x80:
@@ -81,14 +83,14 @@ int getEventSize(byte b) {
         return 1;
     case 0xF0:
         switch (b) {
-            case 0xF0:
-                return -1;
-            case 0xF1:
-                return 1;
-            case 0xF2:
-                return 2;
-            case 0xF3:
-                return 1;
+        case 0xF0:
+            return -1;
+        case 0xF1:
+            return 1;
+        case 0xF2:
+            return 2;
+        case 0xF3:
+            return 1;
         }
     }
     return 0;
@@ -98,16 +100,13 @@ void processByte(byte b) {
     static int midiEventCount = 0;
     bool newEvent = b & 0x80;
     if (newEvent) {
-        /*
-         * https://www.midi.org/specifications/item/table-1-summary-of-midi-message
-         */
         if (b == 0xF7) {
             appendEvent(midiEvent, midiEventPosition);
         }
         midiEventPosition = 0;
         midiEventCount = getEventSize(b);
         if (prevStatus != b || midiDataPosition + midiEventCount > SINGLE_BLE_PACKET_LENGTH) {
-            addEventByte(EMPTY_TIMESTAMP);
+            addEventByte(0x80); // empty timestamp
             addEventByte(b);
         }
         if (midiEventCount > 0) {
