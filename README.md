@@ -5,7 +5,9 @@ This sketch implements the conversion between standard serial MIDI messages and
 Bluetooth Low Energy MIDI Specification as detailed in the docucument at
 [https://developer.apple.com/bluetooth/Apple-Bluetooth-Low-Energy-MIDI-Specification.pdf](https://developer.apple.com/bluetooth/Apple-Bluetooth-Low-Energy-MIDI-Specification.pdf)
 
-![mourino](https://raw.githubusercontent.com/oxesoft/mourino/master/mourino.jpg)
+![mourino protoboard](https://raw.githubusercontent.com/oxesoft/mourino/master/mourino.jpg)
+
+![mourino boxed](https://raw.githubusercontent.com/oxesoft/mourino/master/boxed.jpg)
 
 To connect a MIDI keyboard to the Arduino 101 RX pin you should make a small circuit
 using an optocoupler as largely shown on internet (make a search of images with the words

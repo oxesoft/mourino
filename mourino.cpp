@@ -26,14 +26,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define byte unsigned char
 #define BLE_MAX_ATTR_DATA_LEN   20
 #define MINIMUM_CONN_INTERVAL   11250
+#define OUTPUT                  1
+#define HIGH                    1
 #define BLEWrite                1
 #define BLEWriteWithoutResponse 2
 #define BLENotify               4
 #define BLERead                 8
 #define BLEWritten              1
+#define BLEConnected            1
+#define BLEDisconnected         2
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <time.h>
 
 #define SERIAL_MIDI_BYTES_COUNT 200
 byte testStream[SERIAL_MIDI_BYTES_COUNT] = {
@@ -160,7 +165,8 @@ int packetsLength[BLE_MIDI_PACKETS_COUNT] = {
 };
 
 int packetsCount = 0;
-int bytesCount = 0;
+int bytesCount   = 0;
+int step         = 1;
 
 class BLEService;
 
@@ -173,6 +179,7 @@ public:
     void advertise();
     void addService(BLEService &service);
     void setAdvertisedServiceUuid(int uuid);
+    void setEventHandler(int type, void (*handler)(BLEDevice central));
     void poll();
 private:
     BLEService *service;
@@ -229,6 +236,9 @@ void BLEDevice::addService(BLEService &service) {
 void BLEDevice::setAdvertisedServiceUuid(int uuid) {
 }
 
+void BLEDevice::setEventHandler(int type, void (*handler)(BLEDevice central)) {
+}
+
 void BLEDevice::poll() {
     if (packetsPosition < BLE_MIDI_PACKETS_COUNT) {
         this->service->fireEvent(*this, packets[this->packetsPosition], packetsLength[this->packetsPosition]);
@@ -243,18 +253,24 @@ BLECharacteristic::BLECharacteristic(const char *uuid, int pars, int len) {
 }
 
 void BLECharacteristic::setValue(byte *buffer, int len) {
-    printf("packet (%02i bytes):", len);
-    for (int i = 0; i < len; i++) {
-        printf(" %02X", buffer[i]);
+    switch (step) {
+    case 1:
+        printf("packet (%02i bytes):", len);
+        for (int i = 0; i < len; i++) {
+            printf(" %02X", buffer[i]);
+        }
+        printf("\n");
+        if (memcmp(buffer, packets[packetsCount], len)) {
+            printf("--------------------\n");
+            printf("UNEXPECTED PACKET!!!\n");
+            printf("--------------------\n");
+            exit(1);
+        }
+        packetsCount++;
+        break;
+    default:
+        break;
     }
-    printf("\n");
-    if (memcmp(buffer, packets[packetsCount], len)) {
-        printf("--------------------\n");
-        printf("UNEXPECTED PACKET!!!\n");
-        printf("--------------------\n");
-        exit(1);
-    }
-    packetsCount++;
 }
 
 void BLECharacteristic::setEventHandler(int type, void (*callbackFunction)(BLEDevice, BLECharacteristic)) {
@@ -298,6 +314,16 @@ unsigned long micros() {
     return timeMicros;
 }
 
+unsigned long millis() {
+    return 0;
+}
+
+void pinMode(int pin, int mode) {
+}
+
+void digitalWrite(int pin, int value) {
+}
+
 class Serial {
 public:
     unsigned int pointer;
@@ -307,18 +333,30 @@ public:
     void begin(int baudrate) {
     }
     int available() {
-        int length = SERIAL_MIDI_BYTES_COUNT - pointer;
-        if (!length) {
-            timeMicros += MINIMUM_CONN_INTERVAL;
+        switch (step) {
+        case 1: {
+            int length = SERIAL_MIDI_BYTES_COUNT - pointer;
+            if (!length) {
+                timeMicros += MINIMUM_CONN_INTERVAL;
+            }
+            return length;
         }
-        return length;
+        default:
+            return 1;
+        }
     }
     byte read() {
-        byte b = testStream[pointer++];
-        if (b == 0x7F || b == 0xF7) {
-            timeMicros += MINIMUM_CONN_INTERVAL;
+        switch (step) {
+        case 1: {
+            byte b = testStream[pointer++];
+            if (b == 0x7F || b == 0xF7) {
+                timeMicros += MINIMUM_CONN_INTERVAL;
+            }
+            return b;
         }
-        return b;
+        default:
+            return rand() % 0xFF;
+        }
     }
     void write(byte b) {
         if (b != testStream[bytesCount] || bytesCount >= SERIAL_MIDI_BYTES_COUNT) {
@@ -341,6 +379,8 @@ Serial Serial1;
 int main() {
     unsigned int count = 0;
     setup();
+    // -------------------------------------------------------------------------
+    step = 1;
     while (packetsCount < BLE_MIDI_PACKETS_COUNT || bytesCount < SERIAL_MIDI_BYTES_COUNT) {
         loop();
         count++;
@@ -352,9 +392,17 @@ int main() {
                 printf("BYTE NOT SENT!!!\n");
             }
             printf("--------------------------------------\n");
-            exit(1);
+            break;
         }
     }
+    // -------------------------------------------------------------------------
+    step = 2;
+    count = 1000000;
+    while (count--) {
+        loop();
+    }
+    // -------------------------------------------------------------------------
+    return EXIT_SUCCESS;
 }
 
 #endif

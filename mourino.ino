@@ -34,6 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SINGLE_BLE_PACKET_LENGTH    BLE_MAX_ATTR_DATA_LEN
 #define MIDI_EVENT_MAX_LENGTH       SINGLE_BLE_PACKET_LENGTH - 1 /* minus the header size */
 
+#define EXTERNAL_LED_PIN            7
+
 BLEService midiService("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
 BLECharacteristic midiChar("7772E5DB-3868-4112-A1A9-F2669D106BF3", BLEWrite | BLEWriteWithoutResponse | BLENotify | BLERead, SINGLE_BLE_PACKET_LENGTH);
 
@@ -43,6 +45,8 @@ uint8_t midiEvent[MIDI_EVENT_MAX_LENGTH];
 int midiDataPosition;
 int midiEventPosition;
 byte prevStatus;
+
+bool isConnected;
 
 void sendPacket() {
     midiChar.setValue(midiData, midiDataPosition);
@@ -187,10 +191,37 @@ void midiCharacteristicWritten(BLEDevice central, BLECharacteristic characterist
     }
 }
 
+void midiDeviceConnectHandler(BLEDevice central) {
+    isConnected = true;
+}
+
+void midiDeviceDisconnectHandler(BLEDevice central) {
+    isConnected = false;
+}
+
+void ledTick() {
+    static unsigned long ledTime = 0;
+    static byte ledValue = HIGH;
+    const int LED_BLINK_TIME = 500;
+    if (isConnected) {
+        digitalWrite(EXTERNAL_LED_PIN, HIGH);
+        return;
+    }
+    if (millis() - ledTime > LED_BLINK_TIME) {
+        ledValue = !ledValue;
+        digitalWrite(EXTERNAL_LED_PIN, ledValue);
+        ledTime = millis();
+    }
+}
+
 void setup() {
     midiData[0] = 0x80; // header with empty timestamp
     midiDataPosition = 1;
     prevStatus = 0x00;
+    isConnected = false;
+
+    pinMode(EXTERNAL_LED_PIN, OUTPUT);
+    digitalWrite(EXTERNAL_LED_PIN, HIGH);
     
     Serial1.begin(31250);    
 
@@ -200,6 +231,8 @@ void setup() {
     BLE.setAdvertisedServiceUuid(midiService.uuid());
     midiService.addCharacteristic(midiChar);
     BLE.addService(midiService);
+    BLE.setEventHandler(BLEConnected, midiDeviceConnectHandler);
+    BLE.setEventHandler(BLEDisconnected, midiDeviceDisconnectHandler);
     midiChar.setEventHandler(BLEWritten, midiCharacteristicWritten);
     BLE.advertise();
 }
@@ -218,5 +251,6 @@ void loop() {
         }
         time = micros();
         BLE.poll();
+        ledTick();
     }
 }
