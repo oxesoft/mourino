@@ -1,8 +1,8 @@
 # Mourino
-An adapter for MIDI over bluetooth low energy using an Arduino 101
+MIDI over Bluetooth Low Energy (BLE) using an Arduino 101
 
 This sketch implements the conversion between standard serial MIDI messages and
-Bluetooth Low Energy MIDI Specification as detailed in the docucument at
+Bluetooth Low Energy MIDI Specification as detailed in the document at
 [https://developer.apple.com/bluetooth/Apple-Bluetooth-Low-Energy-MIDI-Specification.pdf](https://developer.apple.com/bluetooth/Apple-Bluetooth-Low-Energy-MIDI-Specification.pdf)
 
 ![mourino protoboard](https://raw.githubusercontent.com/oxesoft/mourino/master/mourino.jpg)
