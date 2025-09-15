@@ -3,7 +3,7 @@ MIDI over Bluetooth Low Energy (BLE) using an Arduino 101
 
 This sketch implements the conversion between standard serial MIDI messages and
 Bluetooth Low Energy MIDI Specification as detailed in the document at
-[https://www.midi.org/specifications/midi-transports-specifications/midi-over-bluetooth-low-energy-ble-midi](https://www.midi.org/specifications/midi-transports-specifications/midi-over-bluetooth-low-energy-ble-midi)
+[https://midi.org/midi-over-bluetooth-low-energy-ble-midi](https://midi.org/midi-over-bluetooth-low-energy-ble-midi)
 
 ![mourino protoboard](https://raw.githubusercontent.com/oxesoft/mourino/master/mourino.jpg)
 
